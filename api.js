@@ -6,6 +6,7 @@ window.VietnamWorksJobAlert = (function() {
   var defaults = {
       url: 'http://www.vietnamworks.com/',
       fetchUrl: 'https://api.vietnamworks.com/jobs/search',
+      searchTitleUrl: 'http://www.vietnamworks.com/jobseekers/job_title_auto_completed_ajax.php',
       keyword: '',
       category: 0,
       jobLevel: 0,
@@ -65,8 +66,11 @@ var xhr = (function () {
         xhr.setRequestHeader('If-Modified-Since', '');
 
         if(body) {
+            if (typeof body == 'object') {
+                body = JSON.stringify(body)
+            }
             xhr.send(
-                JSON.stringify(body)
+                body
             );
         } else {
             xhr.send();
@@ -124,7 +128,46 @@ function fetchJobs() {
     });
 }
 
+function titleMapper(titles) {
+    var result = [];
+
+    for (idx in titles) {
+        result.push({
+            value: titles[idx],
+            text: titles[idx]
+        });
+    }
+
+    return result;
+}
+
+var titleCaches = {};
+
+function searchTitle(keyword, callback, err) {
+    var headers = {
+        "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Accept": "application/json, text/javascript, */*; q=0.01"
+    };
+
+    query = encodeURIComponent(keyword);
+    key_cache = btoa(query);
+    if (key_cache in titleCaches) {
+        callback(titleCaches[key_cache]);
+    } else {
+        var body = "query=" + query;
+
+        xhr('POST', VietnamWorksJobAlert.settings.get('searchTitleUrl'), headers, body, function (data, status, response) {
+            var content = JSON.parse(data);
+            var condition = status == 200;
+            if(condition && content.length > 0) {
+                titleCaches[key_cache] = titleMapper(content);
+                callback(titleCaches[key_cache]);
+            } else {
+                err(status, response);
+            }
+        });
+    }
+}
+
 chrome.alarms.create({periodInMinutes: parseInt(VietnamWorksJobAlert.settings.get('interval'))});
 chrome.alarms.onAlarm.addListener(fetchJobs);
-
-

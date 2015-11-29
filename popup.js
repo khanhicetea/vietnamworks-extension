@@ -62,4 +62,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     showHideViewAllButton();
+
+    $('.selectize-field').each(function() {
+        $(this).selectize({
+    		create: false,
+    		sortField: {
+    			field: 'text'
+    		},
+    		dropdownParent: 'body'
+    	});
+    });
+
+    $('#ja-searchTitle').selectize({
+        create: true,
+        createOnBlur: true,
+        loadThrottle: 200,
+        valueField: 'value',
+		labelField: 'text',
+		searchField: 'value',
+        render: {
+            option_create: function(data, escape) {
+                return '<div class="create">Search with <strong>' + escape(data.input) + '</strong></div>';
+            }
+        },
+        load: function(query, callback) {
+            if (!query.length) return callback();
+            searchTitle(query, function(res) {
+                callback(res);
+            }, function(status, res) {
+                callback();
+            });
+        },
+        onChange: function(value) {
+            $('#ja-title').val(value);
+        }
+    });
 }, false);
