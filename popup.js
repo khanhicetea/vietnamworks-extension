@@ -7,7 +7,10 @@ function showHideViewAllButton() {
         document.getElementById('viewAllJobsButton').text =  VietnamWorksJobAlert.settings.get('numberMatchingJobs') + ' jobs found, click here to review them.';
         document.getElementById('viewJobsDiv').style.visibility = "visible";
     } else {
-        document.getElementById('viewJobsDiv').style.visibility = "hidden";
+        // Need to show the alert to user if no jobs have been found
+        document.getElementById('viewAllJobsButton').href =  getVietnamWorksUrl() + '?' + VietnamWorksJobAlert.settings.get('utm');
+        document.getElementById('viewAllJobsButton').text =  'No jobs found, click here to search again.';
+        document.getElementById('viewJobsDiv').style.visibility = "visible";
     }
 }
 
@@ -53,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('setupJobAlertButton').addEventListener('click', setupJobAlert );
     document.getElementById('viewAllJobsButton').addEventListener('click', viewAllJobs );
 
-    document.getElementById('ja-title').value = VietnamWorksJobAlert.settings.get('keyword');
+    search_keyword = VietnamWorksJobAlert.settings.get('keyword');
     document.getElementById('ja-category').value = VietnamWorksJobAlert.settings.get('category');
     document.getElementById('ja-joblevel').value = VietnamWorksJobAlert.settings.get('jobLevel');
     document.getElementById('ja-location').value = VietnamWorksJobAlert.settings.get('location');
@@ -73,9 +76,10 @@ document.addEventListener('DOMContentLoaded', function() {
     	});
     });
 
-    $('#ja-searchTitle').selectize({
+    $('#ja-title').selectize({
         create: true,
         createOnBlur: true,
+        openOnFocus: (search_keyword ? false : true),
         loadThrottle: 200,
         valueField: 'value',
 		labelField: 'text',
@@ -92,9 +96,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }, function(status, res) {
                 callback();
             });
-        },
-        onChange: function(value) {
-            $('#ja-title').val(value);
         }
     });
+
+    // Reload previous keyword from settings
+    if (search_keyword) {
+        var selected_item = {value: search_keyword, text: search_keyword};
+        $('#ja-title')[0].selectize.addOption(selected_item);
+        $('#ja-title')[0].selectize.setValue(search_keyword);
+    }
 }, false);
